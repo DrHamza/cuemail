@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "env": {
+    "REPORT_WEBHOOK_URL": "https://script.google.com/macros/s/AKfycbwEfhMM0Iq88YPkbjwxe2Iz_n3V3GLbFuAJ2DJ2osbCSGIz4TgguwuWya0oSEKWIXwAxg/exec"
+  },
   "routes": [
     {
       "src": "^/api/_(.*)",

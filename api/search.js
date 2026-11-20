@@ -40,8 +40,8 @@ async function sendReport(logData) {
     // 1. Structured log for Vercel Logs Dashboard
     console.log('[REPORT:STUDENT_INQUIRY]', JSON.stringify(logData));
 
-    // 2. Google Sheets or Custom Webhook URL (configured via REPORT_WEBHOOK_URL)
-    const webhookUrl = process.env.REPORT_WEBHOOK_URL;
+    // 2. Google Sheets or Custom Webhook URL (configured via REPORT_WEBHOOK_URL or default)
+    const webhookUrl = process.env.REPORT_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbwEfhMM0Iq88YPkbjwxe2Iz_n3V3GLbFuAJ2DJ2osbCSGIz4TgguwuWya0oSEKWIXwAxg/exec';
     if (webhookUrl) {
         try {
             await fetch(webhookUrl, {
