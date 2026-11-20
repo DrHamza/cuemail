@@ -4,6 +4,12 @@ datasouse/
 *.xls
 ~$*.xlsx
 
+# Insecure client-side data
+students_data.js
+
+# Raw root JSON files (api/_students.json is used instead)
+كلية الدراسات العليا للتربية_*.json
+
 # Temporary & Log files
 *.log
 *.tmp
