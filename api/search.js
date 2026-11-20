@@ -35,7 +35,54 @@ function normalizeInput(str) {
     return String(str).replace(/[٠-٩]/g, d => easternDigits.indexOf(d)).trim();
 }
 
-module.exports = (req, res) => {
+// Send report of student inquiry to configured webhook / notifications
+async function sendReport(logData) {
+    // 1. Structured log for Vercel Logs Dashboard
+    console.log('[REPORT:STUDENT_INQUIRY]', JSON.stringify(logData));
+
+    // 2. Google Sheets or Custom Webhook URL (configured via REPORT_WEBHOOK_URL)
+    const webhookUrl = process.env.REPORT_WEBHOOK_URL;
+    if (webhookUrl) {
+        try {
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logData)
+            });
+        } catch (e) {
+            console.error('Webhook reporting error:', e.message);
+        }
+    }
+
+    // 3. Telegram alert support (configured via TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+    const tgChatId = process.env.TELEGRAM_CHAT_ID;
+    if (tgToken && tgChatId) {
+        try {
+            const message = `🎓 *استعلام جديد عن البريد الجامعي*\n` +
+                            `━━━━━━━━━━━━━━━━━━\n` +
+                            `👤 *الطالب:* ${logData.name}\n` +
+                            `🔢 *الكود:* \`${logData.code}\`\n` +
+                            `📧 *البريد:* \`${logData.email}\`\n` +
+                            `🕒 *التاريخ والوقت:* ${logData.timestamp}\n` +
+                            `🌐 *IP:* \`${logData.ip}\``;
+
+            await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: tgChatId,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) {
+            console.error('Telegram reporting error:', e.message);
+        }
+    }
+}
+
+module.exports = async (req, res) => {
     // Security & Cache Headers: Never cache credential lookups
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -68,7 +115,7 @@ module.exports = (req, res) => {
         if (!normalizedCode || normalizedCode.length < 4) {
             return res.status(400).json({
                 success: false,
-                error: 'يرجى إدخال كود الطالب أو الرقم القومي بشكل صحيح.'
+                error: 'يرجى إدخال كود الطالب بشكل صحيح.'
             });
         }
 
@@ -85,9 +132,28 @@ module.exports = (req, res) => {
         if (!student) {
             return res.status(404).json({
                 success: false,
-                error: 'لم يتم العثور على أي حساب مسجل بهذا الرقم. يرجى التأكد من الكود والمحاولة مرة أخرى.'
+                error: 'لم يتم العثور على أي حساب مسجل بهذا الكود. يرجى التأكد من صحة الكود والمحاولة مرة أخرى.'
             });
         }
+
+        // Get Client IP and Cairo Time
+        const rawIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || 'unknown';
+        const clientIp = String(rawIp).split(',')[0].trim();
+        const cairoTime = new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' });
+
+        // Record & Dispatch Report
+        const reportData = {
+            code: foundCode,
+            name: student.name || 'غير محدد',
+            email: student.email || 'غير مسجل',
+            faculty: student.faculty || 'كلية الدراسات العليا للتربية',
+            timestamp: cairoTime,
+            ip: clientIp,
+            userAgent: req.headers['user-agent'] || 'unknown'
+        };
+
+        // Fire report in background
+        sendReport(reportData).catch(e => console.error('Reporting error:', e));
 
         // Return ONLY the matched student's data
         return res.status(200).json({
