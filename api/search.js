@@ -44,11 +44,18 @@ async function sendReport(logData) {
     const webhookUrl = process.env.REPORT_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbwEfhMM0Iq88YPkbjwxe2Iz_n3V3GLbFuAJ2DJ2osbCSGIz4TgguwuWya0oSEKWIXwAxg/exec';
     if (webhookUrl) {
         try {
-            await fetch(webhookUrl, {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 5000);
+            const resp = await fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logData)
+                body: JSON.stringify(logData),
+                redirect: 'follow',
+                signal: controller.signal
             });
+            clearTimeout(timer);
+            const text = await resp.text();
+            console.log('[WEBHOOK_SUCCESS]', resp.status, text);
         } catch (e) {
             console.error('Webhook reporting error:', e.message);
         }
@@ -152,8 +159,12 @@ module.exports = async (req, res) => {
             userAgent: req.headers['user-agent'] || 'unknown'
         };
 
-        // Fire report in background
-        sendReport(reportData).catch(e => console.error('Reporting error:', e));
+        // Ensure report is delivered to Google Sheets before lambda terminates
+        try {
+            await sendReport(reportData);
+        } catch (e) {
+            console.error('Reporting dispatch error:', e);
+        }
 
         // Return ONLY the matched student's data
         return res.status(200).json({
