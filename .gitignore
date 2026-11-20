@@ -1,0 +1,19 @@
+# Data source folder & raw files
+datasouse/
+*.xlsx
+*.xls
+~$*.xlsx
+
+# Temporary & Log files
+*.log
+*.tmp
+*.bak
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor & IDE files
+.vscode/
+.idea/
