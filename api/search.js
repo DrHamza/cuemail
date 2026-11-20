@@ -98,8 +98,7 @@ module.exports = (req, res) => {
                 email: student.email || 'غير مسجل',
                 pass: student.pass || '',
                 stage: student.stage || 'دراسات عليا',
-                faculty: student.faculty || 'كلية الدراسات العليا للتربية',
-                nid: student.nid ? student.nid : null
+                faculty: student.faculty || 'كلية الدراسات العليا للتربية'
             }
         });
     } catch (err) {

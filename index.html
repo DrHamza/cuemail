@@ -667,10 +667,7 @@
                         <span class="detail-title">المرحلة الدراسية</span>
                         <span class="detail-content" id="resStage">دراسات عليا</span>
                     </div>
-                    <div class="detail-item" id="resNidContainer" style="display:none;">
-                        <span class="detail-title">الرقم القومي</span>
-                        <span class="detail-content" id="resNid">--</span>
-                    </div>
+
                 </div>
             </div>
 
@@ -716,8 +713,6 @@
         const resPass = document.getElementById('resPass');
         const resFaculty = document.getElementById('resFaculty');
         const resStage = document.getElementById('resStage');
-        const resNid = document.getElementById('resNid');
-        const resNidContainer = document.getElementById('resNidContainer');
         const studentAvatar = document.getElementById('studentAvatar');
         const togglePassText = document.getElementById('togglePassText');
 
@@ -818,12 +813,7 @@
                     studentAvatar.textContent = 'ط';
                 }
 
-                if (student.nid) {
-                    resNid.textContent = student.nid;
-                    resNidContainer.style.display = 'flex';
-                } else {
-                    resNidContainer.style.display = 'none';
-                }
+
 
                 resultCard.style.display = 'block';
                 resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
